@@ -1,4 +1,3 @@
-const std       = @import("std");
 const stdout    = std.io.getStdOut().writer();
 const print     = @import("std").debug.print;
 
@@ -45,7 +44,6 @@ pub fn take_first_w(prove:[]const u8) !void {
 
 
 fn print_all(prove:[]const u8) !void {
-    //var fword:[]u8 = undefined;
     print("{s}\n", .{prove});
 }
 
