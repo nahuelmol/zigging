@@ -1,4 +1,5 @@
 const stdout    = std.io.getStdOut().writer();
+const std = @import("std");
 const print     = @import("std").debug.print;
 
 pub fn take_fw(prove:[]const u8) ![]u8 {
