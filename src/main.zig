@@ -2,22 +2,26 @@ const std       = @import("std");
 const display   = @import("controllers/utils.zig");
 const init      = @import("init.zig");
 const print     = @import("std").debug.print;
+const mem       = @import("std").mem;
 
 pub fn main() void {
     
-    // const stdout_file = std.io.getStdOut().writer();
-    // var bw = std.io.bufferedWriter(stdout_file);
-    // const stdout = bw.writer();
-
-    //try stdout.print("Run `zig build test` to run the tests.\n", .{});
-    //try bw.flush();
-
-    //display.printer();
-    //display.checking_types();
-    //try init.take_first_w("hello world");
-    //const result = try init.take_fw("hello world");
-    //print("buffer: {s}\n", .{result});
-
     std.debug.print("hello, world", .{});
+    const bytes = "gellow";
+    print("\n{}\n", .{@TypeOf(bytes)});
+
+    var x: u32 = undefined;
+    var y: u32 = undefined;
+    var z: u32 = undefined;
+    const vector: @Vector(3, u32) = .{7, 8, 9};
+
+    x, y, z = vector;
+    const a: u32 = 44;
+    const b: u32 = 55;
+
+    // print("x = {}, y = {}, z = {}", .{x, y, z});
+
+    const result = if (a != b) 47 else 3089;
+    print("result -> {}  ", .{result});
 }
 
