@@ -1,27 +1,19 @@
 const std       = @import("std");
-const display   = @import("controllers/utils.zig");
-const init      = @import("init.zig");
-const print     = @import("std").debug.print;
-const mem       = @import("std").mem;
+//const display   = @import("controllers/utils.zig");
+//const init      = @import("init.zig");
+//const print     = @import("std").debug.print;
+//const mem       = @import("std").mem;
 
-pub fn main() void {
-    
-    std.debug.print("hello, world", .{});
-    const bytes = "gellow";
-    print("\n{}\n", .{@TypeOf(bytes)});
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
 
-    var x: u32 = undefined;
-    var y: u32 = undefined;
-    var z: u32 = undefined;
-    const vector: @Vector(3, u32) = .{7, 8, 9};
+    const allocator = gpa.allocator();
 
-    x, y, z = vector;
-    const a: u32 = 44;
-    const b: u32 = 55;
+    var args = try std.process.argsWithAllocator(allocator);
+    defer args.deinit();
 
-    // print("x = {}, y = {}, z = {}", .{x, y, z});
-
-    const result = if (a != b) 47 else 3089;
-    print("result -> {}  ", .{result});
+    while (args.next()) |arg| {
+        std.debug.print("{s}\n", .{arg});
+    }
 }
-
