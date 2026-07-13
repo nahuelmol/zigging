@@ -1,12 +1,17 @@
 const std   = @import("std");
 const Command = @import("..\\command.zig").Command;
+const utils     = @import("..\\utils\\utils.zig");
+const File      = @import("..\\fs\\confile.zig").File;
 
 pub fn Worker(cmd:Command) !void {
     var targetpath:[]const u8 = "";
-    std.debug.print("\nroot:{s}\ntarget:{s}\ntypetarget:{s}\n", .{ cmd.root, cmd.target, cmd.typetarget });
     if (std.mem.eql(u8, cmd.root, "l")) {
         if(std.mem.eql(u8, cmd.target, "download") or std.mem.eql(u8, cmd.target, "d")){
             targetpath = "C:\\Users\\USUARIO\\Downloads";
+        } else if(std.mem.eql(u8, cmd.target, "trabajo") or std.mem.eql(u8, cmd.target, "t")){
+            targetpath = "C:\\Users\\USUARIO\\trabajo";
+        } else {
+            targetpath = ".";
         }
         const cwd   = std.fs.cwd();
         var dir     = try cwd.openDir(targetpath, .{ .iterate = true });
@@ -17,18 +22,28 @@ pub fn Worker(cmd:Command) !void {
             if(std.mem.eql(u8, cmd.typetarget, "all")){
                 std.debug.print("{s} ({any})\n", .{ entry.name, entry.kind });
             } else if(std.mem.eql(u8, cmd.typetarget, "P")){
-                if(std.mem.eql(u8, entry.name[0..1], "P_")){
+                if(std.mem.eql(u8, entry.name[0..2], "P ")){
                     std.debug.print("{s}\n", .{ entry.name });
                 }
+            } else if(std.mem.eql(u8, cmd.typetarget, "DC")){
+                if(std.mem.eql(u8, entry.name[0..3], "DC ")){
+                    std.debug.print("{s}\n", .{ entry.name });
+                }
+            } else {
+                std.debug.print("not recognized target\n", .{});
             }
         }
-        std.debug.print("looking at {s}\n", .{cmd.target});
     } else if (std.mem.eql(u8, cmd.root, "s")){
         std.debug.print("saving file in db", .{});
-        //catch @panic("some error");
+    } else if (std.mem.eql(u8, cmd.root, "set")){
+        if (utils.doExists("manifest.json") == false){
+            const file = try std.fs.cwd().createFile("manifest.json", .{});
+            defer file.close();
+            try file.writeAll("{\n\"origin\": \"\"\n}");
+        }
+        try utils.setManifest();
     } else if (std.mem.eql(u8, cmd.root, "d")){
-        std.debug.print("idk", .{});
-        //catch @panic("some error");
+        std.debug.print("deleting something", .{});
     } else {
         std.debug.print("\nworking\n", .{});
     }

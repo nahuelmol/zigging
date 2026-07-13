@@ -4,6 +4,7 @@ const commands = [_][]const u8{
     "l",
     "s",
     "d",
+    "set",
 };
 
 pub const Command = struct {
@@ -20,7 +21,6 @@ pub const Command = struct {
 
     pub fn deinit(self: *Command) void {
         self.allocator.free(self.root);
-
         if (self.target.len != 1 or self.target[0] != '.') {
             self.allocator.free(self.target);
         }
@@ -65,6 +65,12 @@ pub const Command = struct {
                 std.debug.print("setting for d command", .{});
             } else if (std.mem.eql(u8, "s", self.root)) {
                 std.debug.print("setting for s command", .{});
+            } else if (std.mem.eql(u8, "set", self.root)) {
+                if (nargs > 1){
+                    self.target = try self.allocator.dupe(u8, argv[2]);
+                } else {
+                    self.target = ".";
+                }
             } else {
                 std.debug.print("unrecognized root", .{});
             }
@@ -72,6 +78,5 @@ pub const Command = struct {
             std.debug.print("Command is not available\n", .{});
             return;
         }
-        std.debug.print("command setted\n", .{});
     }
 };
