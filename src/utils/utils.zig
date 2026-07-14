@@ -11,11 +11,20 @@ pub fn doExists(filepath:[]const u8) bool {
     return false;
 }
 
-pub fn setManifest() !void {
+pub fn setManifest(opc:[]const u8) !void {
     const allocator = std.heap.page_allocator;
     const file = try std.fs.cwd().openFile("manifest.json", .{});
     defer file.close();
     const data = try file.readToEndAlloc(allocator, 1024 * 1024);
+
+    if(std.mem.eql(u8, opc, "o")){
+        var buffer: [256]u8 = undefined;
+        var stdin_reader = std.fs.File.stdin().reader(&buffer);
+        const stdin = &stdin_reader.interface;
+        const line = try stdin.takeDelimiterExclusive('\n');
+        std.debug.print("input -> {s}\n", .{line});
+    }
+
     defer allocator.free(data);
     var parsed = try std.json.parseFromSlice(
         std.json.Value,

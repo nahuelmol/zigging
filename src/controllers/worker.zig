@@ -19,13 +19,13 @@ pub fn Worker(cmd:Command) !void {
         var it = dir.iterate();
 
         while (try it.next()) |entry| {
-            if(std.mem.eql(u8, cmd.typetarget, "all")){
+            if(std.mem.eql(u8, cmd.typetarget.?, "all")){
                 std.debug.print("{s} ({any})\n", .{ entry.name, entry.kind });
-            } else if(std.mem.eql(u8, cmd.typetarget, "P")){
+            } else if(std.mem.eql(u8, cmd.typetarget.?, "P")){
                 if(std.mem.eql(u8, entry.name[0..2], "P ")){
                     std.debug.print("{s}\n", .{ entry.name });
                 }
-            } else if(std.mem.eql(u8, cmd.typetarget, "DC")){
+            } else if(std.mem.eql(u8, cmd.typetarget.?, "DC")){
                 if(std.mem.eql(u8, entry.name[0..3], "DC ")){
                     std.debug.print("{s}\n", .{ entry.name });
                 }
@@ -41,7 +41,7 @@ pub fn Worker(cmd:Command) !void {
             defer file.close();
             try file.writeAll("{\n\"origin\": \"\"\n}");
         }
-        try utils.setManifest();
+        try utils.setManifest(cmd.target);
     } else if (std.mem.eql(u8, cmd.root, "d")){
         std.debug.print("deleting something", .{});
     } else {

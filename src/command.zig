@@ -11,12 +11,13 @@ pub const Command = struct {
     allocator: std.mem.Allocator,
     root: []const u8,
     target: []const u8,
-    typetarget: []const u8,
+    typetarget: ?[]u8,
 
     pub fn init(self: *Command, allocator: std.mem.Allocator) void {
         self.allocator = allocator;
         self.root = "";
         self.target = "";
+        self.typetarget = null;
     }
 
     pub fn deinit(self: *Command) void {
@@ -25,9 +26,11 @@ pub const Command = struct {
             self.allocator.free(self.target);
         }
 
-        if (!std.mem.eql(u8, self.typetarget, "all")) {
-            self.allocator.free(self.typetarget);
+        //if (!std.mem.eql(u8, self.typetarget.?, "all") or (self.typetarget.?.len != 0)) {
+        if (self.typetarget) |tt| {
+            self.allocator.free(tt);
         }
+        //}
     }
 
     pub fn set(self: *Command) !void {
@@ -56,7 +59,7 @@ pub const Command = struct {
                     if (nargs > 2){
                         self.typetarget = try self.allocator.dupe(u8, argv[3]);
                     } else {
-                        self.typetarget = "all";
+                        self.typetarget = try self.allocator.dupe(u8, "all");
                     }
                 } else {
                     self.target = ".";
@@ -69,7 +72,7 @@ pub const Command = struct {
                 if (nargs > 1){
                     self.target = try self.allocator.dupe(u8, argv[2]);
                 } else {
-                    self.target = ".";
+                    self.target = try self.allocator.dupe(u8, ".");
                 }
             } else {
                 std.debug.print("unrecognized root", .{});
