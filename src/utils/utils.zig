@@ -16,16 +16,8 @@ pub fn setManifest(opc:[]const u8) !void {
     const file = try std.fs.cwd().openFile("manifest.json", .{});
     defer file.close();
     const data = try file.readToEndAlloc(allocator, 1024 * 1024);
-
-    if(std.mem.eql(u8, opc, "o")){
-        var buffer: [256]u8 = undefined;
-        var stdin_reader = std.fs.File.stdin().reader(&buffer);
-        const stdin = &stdin_reader.interface;
-        const line = try stdin.takeDelimiterExclusive('\n');
-        std.debug.print("input -> {s}\n", .{line});
-    }
-
     defer allocator.free(data);
+
     var parsed = try std.json.parseFromSlice(
         std.json.Value,
         allocator,
@@ -33,4 +25,30 @@ pub fn setManifest(opc:[]const u8) !void {
         .{},
     );
     defer parsed.deinit();
+
+    var obj = parsed.value.object;
+    if(std.mem.eql(u8, opc, "o")){
+        var buffer: [256]u8 = undefined;
+        var stdin_reader = std.fs.File.stdin().reader(&buffer);
+        const stdin = &stdin_reader.interface;
+        const origin = try stdin.takeDelimiterExclusive('\n');
+        const clean_origin = std.mem.trimRight(u8, origin, "\r");
+        const origin_copy = try allocator.dupe(u8, clean_origin);
+        try obj.put("origin", .{ .string = origin_copy });
+    }
+
+    const out = try std.fs.cwd().createFile("manifest.json", .{
+        .truncate = true,
+    });
+    defer out.close();
+
+    var out_writer = out.writer(&.{});
+    var stringifier = std.json.Stringify{
+        .writer = &out_writer.interface,
+        .options = .{
+            .whitespace = .indent_2,
+        },
+    };
+
+    try stringifier.write(parsed.value);
 }

@@ -26,11 +26,9 @@ pub const Command = struct {
             self.allocator.free(self.target);
         }
 
-        //if (!std.mem.eql(u8, self.typetarget.?, "all") or (self.typetarget.?.len != 0)) {
         if (self.typetarget) |tt| {
             self.allocator.free(tt);
         }
-        //}
     }
 
     pub fn set(self: *Command) !void {
