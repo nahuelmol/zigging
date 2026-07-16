@@ -1,10 +1,12 @@
 const std       = @import("std");
+const utils     = @import("utils\\utils.zig");
 
 const commands = [_][]const u8{
     "l",
     "s",
     "d",
     "set",
+    "cpf",
 };
 
 pub const Command = struct {
@@ -52,6 +54,17 @@ pub const Command = struct {
         }
         if (found == true) {
             if (std.mem.eql(u8, "l", self.root)) {
+                if (nargs > 1){
+                    self.target = try self.allocator.dupe(u8, argv[2]);
+                    if (nargs > 2){
+                        self.typetarget = try self.allocator.dupe(u8, argv[3]);
+                    } else {
+                        self.typetarget = try self.allocator.dupe(u8, "all");
+                    }
+                } else {
+                    self.target = ".";
+                }
+            } else if (std.mem.eql(u8, "cpf", self.root)) {
                 if (nargs > 1){
                     self.target = try self.allocator.dupe(u8, argv[2]);
                     if (nargs > 2){

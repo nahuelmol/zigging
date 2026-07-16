@@ -5,7 +5,9 @@ const File      = @import("..\\fs\\confile.zig").File;
 
 pub fn Worker(cmd:Command) !void {
     var targetpath:[]const u8 = "";
-    if (std.mem.eql(u8, cmd.root, "l")) {
+    if (std.mem.eql(u8, cmd.root, "cpf")) {
+        try utils.Copyfrom(cmd);
+    } else if (std.mem.eql(u8, cmd.root, "l")) {
         if(std.mem.eql(u8, cmd.target, "download") or std.mem.eql(u8, cmd.target, "d")){
             targetpath = "C:\\Users\\USUARIO\\Downloads";
         } else if(std.mem.eql(u8, cmd.target, "trabajo") or std.mem.eql(u8, cmd.target, "t")){
