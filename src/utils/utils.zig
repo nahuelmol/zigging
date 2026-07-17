@@ -1,5 +1,7 @@
 const std = @import("std");
 const Command   = @import(".\\..\\command.zig").Command;
+const screen    = @import(".\\screen.zig");
+const zz        = @import("zigzag");
 
 pub fn doExists(filepath:[]const u8) bool {
     _ = std.fs.cwd().openFile(filepath, .{}) catch |err| {
@@ -113,59 +115,42 @@ pub fn Copyfrom(cmd:Command) !void {
     var it = dir.iterate();
 
     const originpath = try takeManifest("origin");
+    var new:[]const u8  = "";
+    const allocator = std.heap.page_allocator;
+    const types = [_][]const u8{ "P", "DC" };
     while (try it.next()) |entry| {
         if(std.mem.eql(u8, cmd.target, "all")){
             std.debug.print("copying.. {s}\n", .{ entry.name });
-        } else if(std.mem.eql(u8, cmd.target, "P")){
-            if(std.mem.eql(u8, entry.name[0..2], "P ")){
-                std.debug.print("copying..{s}\n", .{ entry.name });
-                const allocator = std.heap.page_allocator;
-                const result = try std.fmt.allocPrint(
-                    allocator,
-                    "{s}\\{s}",
-                    .{ targetpath, entry.name },
-                );
-                defer allocator.free(result);
-                const newfilepath = try std.fmt.allocPrint(
-                    allocator,
-                    "{s}\\{s}",
-                    .{ originpath, entry.name },
-                );
-                defer allocator.free(newfilepath);
-
-                try cwd.copyFile(
-                    result,
-                    cwd,
-                    newfilepath,
-                    .{},
-                );
-            }
-        } else if(std.mem.eql(u8, cmd.target, "DC")){
-            if(std.mem.eql(u8, entry.name[0..3], "DC ")){
-                std.debug.print("copying..{s}\n", .{ entry.name });
-                const allocator = std.heap.page_allocator;
-                const result = try std.fmt.allocPrint(
-                    allocator,
-                    "{s}\\{s}",
-                    .{ targetpath, entry.name },
-                );
-                defer allocator.free(result);
-                const newfilepath = try std.fmt.allocPrint(
-                    allocator,
-                    "{s}\\{s}",
-                    .{ originpath, entry.name },
-                );
-                defer allocator.free(newfilepath);
-
-                try cwd.copyFile(
-                    result,
-                    cwd,
-                    newfilepath,
-                    .{},
-                );
-            }
         } else {
-            std.debug.print("not recognized target\n", .{});
+            for (types) |tp| {
+                if (std.mem.eql(u8, tp, cmd.target)) {
+                    const codefile = try std.fmt.allocPrint(allocator,"{s}{s}", .{ tp, " "});
+                    var name_sliced:[]const u8 = "";
+                    if (std.mem.indexOfScalar(u8, entry.name, ' ')) |index| {
+                        name_sliced = entry.name[0..(index+1)];
+                    }
+                    if(std.mem.eql(u8, name_sliced, codefile)){
+                        new = entry.name;
+                        const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
+                        defer allocator.free(oldpath);
+
+                        const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
+                        defer allocator.free(newpath);
+
+                        try cwd.copyFile(oldpath, cwd, newpath,.{},
+                        );
+                    }
+                }
+            }
         }
     }
+
+    //const result = try std.fmt.allocPrint(
+    //    prev,
+    //    "{s}\\{s}",
+    //    .{ prev, new},
+    //);
+    //var program = try zz.Program(screen.Model).init(allocator);
+    //defer program.deinit();
+    //try program.run();
 }

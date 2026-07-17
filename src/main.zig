@@ -2,7 +2,10 @@ const std       = @import("std");
 const worker    = @import("controllers\\worker.zig");
 const Command   = @import("command.zig").Command;
 
+const screen    = @import("screen");
+
 pub fn main() !void {
+
     var cmd: Command = undefined;
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -14,4 +17,6 @@ pub fn main() !void {
 
     try cmd.set();
     try worker.Worker(cmd);
+
+
 }
