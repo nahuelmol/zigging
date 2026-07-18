@@ -41,8 +41,21 @@ pub fn Worker(cmd:Command) !void {
         const allocator = std.heap.page_allocator;
         var program = try zz.Program(screen.Model).init(allocator);
         defer program.deinit();
+
+        //const msg = screen.Model.Msg {
+        //    .text = "message"
+        //};
+
+        var list = zz.StyledList.init(allocator);
+        list.setEnumerator(.roman);
+        list.addItem("gello") catch {};
+        list.addItem("hello") catch {};
+        list.addItem("rello") catch {};
+        program.model.list = list;
+
+        //try program.send(msg);
         try program.run();
-        try program.model.example();
+
     } else if (std.mem.eql(u8, cmd.root, "sv")){
         std.debug.print("saving file in db", .{});
     } else if (std.mem.eql(u8, cmd.root, "set")){

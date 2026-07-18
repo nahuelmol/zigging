@@ -10,23 +10,23 @@ pub const Model = struct {
 
     pub const Msg = union(enum) {
         key: zz.KeyEvent,
+        text: []const u8,
     };
 
     pub fn init(self: *Model, ctx: *zz.Context) zz.Cmd(Msg) {
         std.debug.print("INIT MODEL\n", .{});
+
         var editor = zz.components.TextArea.init(ctx.allocator);
         editor.setSize(80, 24);
         editor.line_numbers = true;
 
-        var list = zz.StyledList.init(ctx.allocator);
-        list.setEnumerator(.roman);
 
         self.* = .{ 
             .count = 0, 
             .files = "",
             .editor = editor,
             .text = "",
-            .list = list,
+            .list = self.list,
         };
 
         return .none;
@@ -40,6 +40,9 @@ pub const Model = struct {
                 .down => self.count -= 1,
                 else => {},
             },
+            .text => |text| {
+                std.debug.print("{s}", .{text});
+            },
         }
         return .none;
     }
@@ -49,16 +52,20 @@ pub const Model = struct {
             .bold(true)
             .italic(true)
             .fg(.cyan());
-        const list_text = self.list.items.items[0].text;
+
+        var list_text = std.ArrayList(u8){};
+        for (self.list.items.items) |item| {
+            list_text.appendSlice(ctx.allocator, item.text) catch {};
+            list_text.append(ctx.allocator, '\n') catch {};
+        }
+
         const text = std.fmt.allocPrint(ctx.allocator, "Files:\n{s}\nCount: {d}\nList:{s}\nPress q to quit", 
-            .{ self.text, self.count, list_text }) catch "Error";
+            .{ self.text, self.count, list_text.items }) catch "Error";
         return style.render(ctx.allocator, text) catch text; 
     }
 
-    pub fn example(self: *Model) !void {
-        std.debug.print("EXAMPLE\n", .{});
-        try self.list.addItem("First item");
-        try self.list.addItem("Second item");
-        try self.list.addItemNested("Sub-item", 1);
+    pub fn example(self: *Model, ctx: *zz.Context, text:[]const u8) !void {
+        const msg = Msg{ .text = text };
+        _ = self.update(msg, ctx);
     }
 };
