@@ -1,7 +1,5 @@
 const std = @import("std");
 const Command   = @import(".\\..\\command.zig").Command;
-const screen    = @import(".\\screen.zig");
-const zz        = @import("zigzag");
 
 pub fn doExists(filepath:[]const u8) bool {
     _ = std.fs.cwd().openFile(filepath, .{}) catch |err| {
@@ -101,7 +99,6 @@ pub fn takeManifest(field:[]const u8) ![]const u8 {
 }
 
 pub fn Copyfrom(cmd:Command) !void {
-
     var targetpath:[]const u8 = "";
     if(std.mem.eql(u8, cmd.typetarget.?, "d")){
         targetpath = "C:\\Users\\USUARIO\\Downloads";
@@ -115,7 +112,6 @@ pub fn Copyfrom(cmd:Command) !void {
     var it = dir.iterate();
 
     const originpath = try takeManifest("origin");
-    var new:[]const u8  = "";
     const allocator = std.heap.page_allocator;
     const types = [_][]const u8{ "P", "DC" };
     while (try it.next()) |entry| {
@@ -130,27 +126,17 @@ pub fn Copyfrom(cmd:Command) !void {
                         name_sliced = entry.name[0..(index+1)];
                     }
                     if(std.mem.eql(u8, name_sliced, codefile)){
-                        new = entry.name;
                         const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
                         defer allocator.free(oldpath);
 
                         const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
                         defer allocator.free(newpath);
 
-                        try cwd.copyFile(oldpath, cwd, newpath,.{},
-                        );
+                        try cwd.copyFile(oldpath, cwd, newpath,.{});
                     }
                 }
             }
         }
     }
 
-    //const result = try std.fmt.allocPrint(
-    //    prev,
-    //    "{s}\\{s}",
-    //    .{ prev, new},
-    //);
-    //var program = try zz.Program(screen.Model).init(allocator);
-    //defer program.deinit();
-    //try program.run();
 }

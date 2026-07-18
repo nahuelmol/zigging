@@ -3,14 +3,32 @@ const zz    = @import("zigzag");
 
 pub const Model = struct {
     count: i32,
-    files: "",
+    files: []const u8,
+    text: []const u8,
+    editor: zz.components.TextArea,
+    list: zz.StyledList,
 
     pub const Msg = union(enum) {
         key: zz.KeyEvent,
     };
 
-    pub fn init(self: *Model, _: *zz.Context) zz.Cmd(Msg) {
-        self.* = .{ .count = 0 };
+    pub fn init(self: *Model, ctx: *zz.Context) zz.Cmd(Msg) {
+        std.debug.print("INIT MODEL\n", .{});
+        var editor = zz.components.TextArea.init(ctx.allocator);
+        editor.setSize(80, 24);
+        editor.line_numbers = true;
+
+        var list = zz.StyledList.init(ctx.allocator);
+        list.setEnumerator(.roman);
+
+        self.* = .{ 
+            .count = 0, 
+            .files = "",
+            .editor = editor,
+            .text = "",
+            .list = list,
+        };
+
         return .none;
     }
 
@@ -31,8 +49,16 @@ pub const Model = struct {
             .bold(true)
             .italic(true)
             .fg(.cyan());
+        const list_text = self.list.items.items[0].text;
+        const text = std.fmt.allocPrint(ctx.allocator, "Files:\n{s}\nCount: {d}\nList:{s}\nPress q to quit", 
+            .{ self.text, self.count, list_text }) catch "Error";
+        return style.render(ctx.allocator, text) catch text; 
+    }
 
-        const text = std.fmt.allocPrint(ctx.allocator, "Files:\n{s}\nCount: {d}\n\nPress q to quit", .{ self.files,self.count}) catch "Error";
-        return style.render(ctx.allocator, text) catch text;
+    pub fn example(self: *Model) !void {
+        std.debug.print("EXAMPLE\n", .{});
+        try self.list.addItem("First item");
+        try self.list.addItem("Second item");
+        try self.list.addItemNested("Sub-item", 1);
     }
 };

@@ -7,6 +7,7 @@ const commands = [_][]const u8{
     "d",
     "set",
     "cpf",
+    "see",
 };
 
 pub const Command = struct {
@@ -43,14 +44,19 @@ pub const Command = struct {
 
         _ = args.next();
         const nargs = argv.len - 1;
-        const root = args.next() orelse return error.MissingCommand;
 
-        for (commands) |command| {
-            if (std.mem.eql(u8, command, root)) {
-                found = true;
-                self.root = try self.allocator.dupe(u8, root);
-                break;
+        if (argv.len > 1) {
+            const root = args.next() orelse return error.MissingCommand;
+            for (commands) |command| {
+                if (std.mem.eql(u8, command, root)) {
+                    found = true;
+                    self.root = try self.allocator.dupe(u8, root);
+                    break;
+                }
             }
+        } else {
+            std.debug.print("not command inserted", .{});
+            return;
         }
         if (found == true) {
             if (std.mem.eql(u8, "l", self.root)) {
@@ -77,7 +83,18 @@ pub const Command = struct {
                 }
             } else if (std.mem.eql(u8, "d", self.root)) {
                 std.debug.print("setting for d command", .{});
-            } else if (std.mem.eql(u8, "s", self.root)) {
+            } else if (std.mem.eql(u8, "see", self.root)) {
+                if (nargs > 1){
+                    self.target = try self.allocator.dupe(u8, argv[2]);
+                    if (nargs > 2){
+                        self.typetarget = try self.allocator.dupe(u8, argv[3]);
+                    } else {
+                        self.typetarget = try self.allocator.dupe(u8, "all");
+                    }
+                } else {
+                    self.target = ".";
+                }
+            } else if (std.mem.eql(u8, "sv", self.root)) {
                 std.debug.print("setting for s command", .{});
             } else if (std.mem.eql(u8, "set", self.root)) {
                 if (nargs > 1){

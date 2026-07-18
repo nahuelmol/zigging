@@ -2,6 +2,8 @@ const std   = @import("std");
 const Command = @import("..\\command.zig").Command;
 const utils     = @import("..\\utils\\utils.zig");
 const File      = @import("..\\fs\\confile.zig").File;
+const screen    = @import(".\\..\\utils\\screen.zig");
+const zz        = @import("zigzag");
 
 pub fn Worker(cmd:Command) !void {
     var targetpath:[]const u8 = "";
@@ -35,7 +37,13 @@ pub fn Worker(cmd:Command) !void {
                 std.debug.print("not recognized target\n", .{});
             }
         }
-    } else if (std.mem.eql(u8, cmd.root, "s")){
+    } else if (std.mem.eql(u8, cmd.root, "see")){
+        const allocator = std.heap.page_allocator;
+        var program = try zz.Program(screen.Model).init(allocator);
+        defer program.deinit();
+        try program.run();
+        try program.model.example();
+    } else if (std.mem.eql(u8, cmd.root, "sv")){
         std.debug.print("saving file in db", .{});
     } else if (std.mem.eql(u8, cmd.root, "set")){
         if (utils.doExists("manifest.json") == false){
