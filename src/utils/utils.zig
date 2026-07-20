@@ -1,6 +1,21 @@
 const std       = @import("std");
 const Command   = @import(".\\..\\command.zig").Command;
 
+fn isit(typefile:[]const u8, file: std.fs.File) !bool {
+    var buffer: [12]u8 = undefined;
+    const n = try file.readAll(&buffer);
+    if (n < 12)
+        return false;
+
+    if(std.mem.eql(u8, typefile, "mp4")){
+        return std.mem.eql(u8, buffer[4..8], "ftyp");
+    } else if(std.mem.eql(u8, typefile, "mp3")){
+        return std.mem.eql(u8, buffer[4..8], "ftyp");
+    } else {
+        return false;
+    }
+}
+
 pub fn doExists(filepath:[]const u8) bool {
     _ = std.fs.cwd().openFile(filepath, .{}) catch |err| {
         if (err == error.FileNotFound) {
@@ -90,14 +105,76 @@ pub fn takeManifest(field:[]const u8) ![]const u8 {
     }
 }
 
-pub fn Copyfrom(cmd:Command) !void {
-    var targetpath:[]const u8 = "";
-    if(std.mem.eql(u8, cmd.typetarget.?, "d")){
-        targetpath = "C:\\Users\\USUARIO\\Downloads";
+fn setTarget(which:[]const u8) []const u8 {
+    if(std.mem.eql(u8, cmd.typetarget.?, which)){
+        return "C:\\Users\\USUARIO\\Downloads";
     } else if(std.mem.eql(u8, cmd.typetarget.?, "t")){
-        targetpath = "C:\\Users\\USUARIO\\trabajo";
+        return "C:\\Users\\USUARIO\\trabajo";
     }
+}
 
+pub fn deleteFrom(cmd:Command) !void {
+    const targetpath = setTarget("d");
+    const cwd   = std.fs.cwd();
+    var dir     = try cwd.openDir(targetpath, .{ .iterate = true });
+    defer dir.close();
+    var it = dir.iterate();
+
+    while (try it.next()) |entry| {
+        if(std.mem.eql(u8, cmd.target, "all")){
+            const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
+            defer allocator.free(oldpath);
+
+            const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
+            defer allocator.free(newpath);
+
+            try cwd.copyFile(oldpath, cwd, newpath,.{});
+        } else {
+            for (types) |tp| {
+                if (std.mem.eql(u8, tp, cmd.target)) {
+                    const codefile = try std.fmt.allocPrint(allocator,"{s}{s}", .{ tp, " "});
+                    var name_sliced:[]const u8 = "";
+                    if (std.mem.indexOfScalar(u8, entry.name, ' ')) |index| {
+                        name_sliced = entry.name[0..(index+1)];
+                    }
+                    if(std.mem.eql(u8, name_sliced, codefile)){
+                        const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
+                        defer allocator.free(oldpath);
+
+                        const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
+                        defer allocator.free(newpath);
+
+                        try cwd.copyFile(oldpath, cwd, newpath,.{});
+                    }
+                }
+            }
+            for (multi) |m| {
+                if (std.mem.eql(u8, m, cmd.target)) {
+                    if(entry.kind == .file) {
+                        const path = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
+                        defer allocator.free(path);
+                        var f = try std.fs.cwd().openFile(path, .{});
+                        defer f.close();
+
+                        var res:bool = false;
+                        if(std.mem.eql(u8, m, "V")) {
+                            res = try isit("mp4", f);
+                        } else if (std.mem.eql(u8, m, "M")) {
+                            res = try isit("mp3", f);
+                        }
+                        if (res){
+                            const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
+                            defer allocator.free(newpath);
+                            try cwd.copyFile(path, cwd, newpath,.{});
+                        }
+                    }
+                }
+            }
+        }
+}
+
+pub fn Copyfrom(cmd:Command) !void {
+    const targetpath = setTarget("d");
     const cwd   = std.fs.cwd();
     var dir     = try cwd.openDir(targetpath, .{ .iterate = true });
     defer dir.close();
@@ -106,6 +183,7 @@ pub fn Copyfrom(cmd:Command) !void {
     const originpath = try takeManifest("origin");
     const allocator = std.heap.page_allocator;
     const types = [_][]const u8{ "P", "DC" };
+    const multi = [_][]const u8{ "V", "S"};
     while (try it.next()) |entry| {
         if(std.mem.eql(u8, cmd.target, "all")){
             const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
@@ -135,28 +213,29 @@ pub fn Copyfrom(cmd:Command) !void {
                 }
             }
 
-            //var list = zz.StyledList.init(allocator);
-            //list.setEnumerator(.roman);
+            for (multi) |m| {
+                if (std.mem.eql(u8, m, cmd.target)) {
+                    if(entry.kind == .file) {
+                        const path = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
+                        defer allocator.free(path);
+                        var f = try std.fs.cwd().openFile(path, .{});
+                        defer f.close();
 
-            //if (cmd.all == true) {
-            //    const cwd   = std.fs.cwd();
-            //    var dir     = try cwd.openDir(targetpath, .{ .iterate = true });
-            //    defer dir.close();
-            //    var it = dir.iterate();
+                        var res:bool = false;
+                        if(std.mem.eql(u8, m, "V")) {
+                            res = try isit("mp4", f);
+                        } else if (std.mem.eql(u8, m, "M")) {
+                            res = try isit("mp3", f);
+                        }
+                        if (res){
+                            const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
+                            defer allocator.free(newpath);
+                            try cwd.copyFile(path, cwd, newpath,.{});
+                        }
+                    }
+                }
+            }
 
-            //    while (try it.next()) |entry| {
-            //        if (entry.kind != .file) continue;
-            //        if (std.mem.endsWith(u8, entry.name, ".pdf")) {
-            //            list.addItem(entry.name) catch {};
-            //        } else {
-            //            std.debug.print("cmd is not all", .{});
-            //        }
-            //    }
-            //} else {
-            //    std.debug.print("cmd is not all", .{});
-            //}
-            //program.model.list = list;
-            //try program.run();
         }
     }
 

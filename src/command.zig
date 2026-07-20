@@ -84,7 +84,16 @@ pub const Command = struct {
                     self.target = ".";
                 }
             } else if (std.mem.eql(u8, "d", self.root)) {
-                std.debug.print("setting for d command", .{});
+                if (nargs > 1){
+                    self.target = try self.allocator.dupe(u8, argv[2]);
+                    if (nargs > 2){
+                        self.typetarget = try self.allocator.dupe(u8, argv[3]);
+                    } else {
+                        self.typetarget = try self.allocator.dupe(u8, "all");
+                    }
+                } else {
+                    self.target = ".";
+                }
             } else if (std.mem.eql(u8, "see", self.root)) {
                 if (nargs > 1){
                     self.target = try self.allocator.dupe(u8, argv[2]);

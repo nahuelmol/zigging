@@ -87,7 +87,7 @@ pub fn Worker(cmd:Command) !void {
         }
         try utils.setManifest(cmd.target);
     } else if (std.mem.eql(u8, cmd.root, "d")){
-        std.debug.print("deleting something", .{});
+        utils.deleteFrom();
     } else {
         std.debug.print("\nworking\n", .{});
     }
