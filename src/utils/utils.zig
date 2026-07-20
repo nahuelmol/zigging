@@ -1,4 +1,4 @@
-const std = @import("std");
+const std       = @import("std");
 const Command   = @import(".\\..\\command.zig").Command;
 
 pub fn doExists(filepath:[]const u8) bool {
@@ -26,37 +26,30 @@ pub fn setManifest(opc:[]const u8) !void {
         .{},
     );
     defer parsed.deinit();
-
+    const types = [_][]const u8{ "o", "d" };
     var obj = parsed.value.object;
-    if(std.mem.eql(u8, opc, "o")){
-        var buffer: [256]u8 = undefined;
-        var stdin_reader = std.fs.File.stdin().reader(&buffer);
-        const stdin = &stdin_reader.interface;
-        const origin = try stdin.takeDelimiterExclusive('\n');
-        const clean_origin = std.mem.trimRight(u8, origin, "\r");
-        const origin_copy = try allocator.dupe(u8, clean_origin);
-        if(std.mem.eql(u8, origin_copy, ".")) {
-            var pathbuffer: [std.fs.max_path_bytes]u8 = undefined;
-            const path = try std.process.getCwd(&pathbuffer);
-            const path_copy = try allocator.dupe(u8, path);
-            try obj.put("origin", .{ .string = path_copy });
-        } else {
-            try obj.put("origin", .{ .string = origin_copy });
-        }
-    } else if(std.mem.eql(u8, opc, "d")){
-        var buffer: [256]u8 = undefined;
-        var stdin_reader = std.fs.File.stdin().reader(&buffer);
-        const stdin = &stdin_reader.interface;
-        const origin = try stdin.takeDelimiterExclusive('\n');
-        const clean_origin = std.mem.trimRight(u8, origin, "\r");
-        const origin_copy = try allocator.dupe(u8, clean_origin);
-        if(std.mem.eql(u8, origin_copy, ".")) {
-            var pathbuffer: [std.fs.max_path_bytes]u8 = undefined;
-            const cwd = try std.process.getCwd(&pathbuffer);
-            const cwd_copy = try allocator.dupe(u8, cwd);
-            try obj.put("download", .{ .string = cwd_copy });
-        } else {
-            try obj.put("download", .{ .string = origin_copy });
+    for (types) |tp| {
+        if(std.mem.eql(u8, opc, tp)){
+            var valuepath:[]const u8 = "";
+            if(std.mem.eql(u8, opc, "o")) {
+                valuepath = "origin";
+            } else if(std.mem.eql(u8, opc, "d")) {
+                valuepath = "download";
+            }
+            var buffer: [256]u8 = undefined;
+            var stdin_reader = std.fs.File.stdin().reader(&buffer);
+            const stdin = &stdin_reader.interface;
+            const origin = try stdin.takeDelimiterExclusive('\n');
+            const clean_origin = std.mem.trimRight(u8, origin, "\r");
+            const origin_copy = try allocator.dupe(u8, clean_origin);
+            if(std.mem.eql(u8, origin_copy, ".")) {
+                var pathbuffer: [std.fs.max_path_bytes]u8 = undefined;
+                const path = try std.process.getCwd(&pathbuffer);
+                const path_copy = try allocator.dupe(u8, path);
+                try obj.put(valuepath, .{ .string = path_copy });
+            } else {
+                try obj.put(valuepath, .{ .string = origin_copy });
+            }
         }
     }
 
@@ -72,7 +65,6 @@ pub fn setManifest(opc:[]const u8) !void {
             .whitespace = .indent_2,
         },
     };
-
     try stringifier.write(parsed.value);
 }
 
@@ -116,7 +108,13 @@ pub fn Copyfrom(cmd:Command) !void {
     const types = [_][]const u8{ "P", "DC" };
     while (try it.next()) |entry| {
         if(std.mem.eql(u8, cmd.target, "all")){
-            std.debug.print("copying.. {s}\n", .{ entry.name });
+            const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
+            defer allocator.free(oldpath);
+
+            const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
+            defer allocator.free(newpath);
+
+            try cwd.copyFile(oldpath, cwd, newpath,.{});
         } else {
             for (types) |tp| {
                 if (std.mem.eql(u8, tp, cmd.target)) {
@@ -136,6 +134,29 @@ pub fn Copyfrom(cmd:Command) !void {
                     }
                 }
             }
+
+            //var list = zz.StyledList.init(allocator);
+            //list.setEnumerator(.roman);
+
+            //if (cmd.all == true) {
+            //    const cwd   = std.fs.cwd();
+            //    var dir     = try cwd.openDir(targetpath, .{ .iterate = true });
+            //    defer dir.close();
+            //    var it = dir.iterate();
+
+            //    while (try it.next()) |entry| {
+            //        if (entry.kind != .file) continue;
+            //        if (std.mem.endsWith(u8, entry.name, ".pdf")) {
+            //            list.addItem(entry.name) catch {};
+            //        } else {
+            //            std.debug.print("cmd is not all", .{});
+            //        }
+            //    }
+            //} else {
+            //    std.debug.print("cmd is not all", .{});
+            //}
+            //program.model.list = list;
+            //try program.run();
         }
     }
 

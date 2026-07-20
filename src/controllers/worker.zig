@@ -42,17 +42,38 @@ pub fn Worker(cmd:Command) !void {
         var program = try zz.Program(screen.Model).init(allocator);
         defer program.deinit();
 
+        var list = zz.StyledList.init(allocator);
+        list.setEnumerator(.roman);
+
+        if (cmd.all == true) {
+            const cwd       = std.fs.cwd();
+            const endpath   = try utils.takeManifest("origin");
+            const cwdpath   = try cwd.realpathAlloc(allocator, ".");
+            defer allocator.free(cwdpath);
+            const path      = try std.fs.path.join(allocator, &.{ cwdpath, endpath });
+
+            var dir     = try cwd.openDir(path, .{ .iterate = true });
+            defer dir.close();
+            var it = dir.iterate();
+
+            while (try it.next()) |entry| {
+                if (entry.kind != .file) continue;
+                if (std.mem.endsWith(u8, entry.name, ".pdf")) {
+                    std.debug.print("entry: {s}\n", .{entry.name});
+                    const name = try allocator.dupe(u8, entry.name);
+                    try list.addItem(name);
+                } else {
+                    std.debug.print("cmd is not all", .{});
+                }
+            }
+        } else {
+            std.debug.print("cmd is not all", .{});
+        }
+        program.model.list = list;
+
         //const msg = screen.Model.Msg {
         //    .text = "message"
         //};
-
-        var list = zz.StyledList.init(allocator);
-        list.setEnumerator(.roman);
-        list.addItem("gello") catch {};
-        list.addItem("hello") catch {};
-        list.addItem("rello") catch {};
-        program.model.list = list;
-
         //try program.send(msg);
         try program.run();
 

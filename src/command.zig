@@ -15,12 +15,14 @@ pub const Command = struct {
     root: []const u8,
     target: []const u8,
     typetarget: ?[]u8,
+    all: bool,
 
     pub fn init(self: *Command, allocator: std.mem.Allocator) void {
         self.allocator = allocator;
         self.root = "";
         self.target = "";
         self.typetarget = null;
+        self.all = false;
     }
 
     pub fn deinit(self: *Command) void {
@@ -93,6 +95,7 @@ pub const Command = struct {
                     }
                 } else {
                     self.target = ".";
+                    self.all = true;
                 }
             } else if (std.mem.eql(u8, "sv", self.root)) {
                 std.debug.print("setting for s command", .{});

@@ -59,7 +59,7 @@ pub const Model = struct {
             list_text.append(ctx.allocator, '\n') catch {};
         }
 
-        const text = std.fmt.allocPrint(ctx.allocator, "Files:\n{s}\nCount: {d}\nList:{s}\nPress q to quit", 
+        const text = std.fmt.allocPrint(ctx.allocator, "Files:\n{s}\nCount: {d}\nList:\n{s}\nPress q to quit", 
             .{ self.text, self.count, list_text.items }) catch "Error";
         return style.render(ctx.allocator, text) catch text; 
     }
