@@ -8,6 +8,7 @@ const commands = [_][]const u8{
     "set",
     "cpf",
     "see",
+    "ws",
 };
 
 pub const Command = struct {
@@ -24,6 +25,7 @@ pub const Command = struct {
         self.typetarget = null;
         self.all = false;
     }
+
 
     pub fn deinit(self: *Command) void {
         self.allocator.free(self.root);
@@ -72,6 +74,19 @@ pub const Command = struct {
                 } else {
                     self.target = ".";
                 }
+
+            } else if (std.mem.eql(u8, "ws", self.root)) {
+                if (nargs > 1){
+                    self.target = try self.allocator.dupe(u8, argv[2]);
+                    if (nargs > 2){
+                        self.typetarget = try self.allocator.dupe(u8, argv[3]);
+                    } else {
+                        self.typetarget = try self.allocator.dupe(u8, "all");
+                    }
+                } else {
+                    self.target = ".";
+                }
+
             } else if (std.mem.eql(u8, "cpf", self.root)) {
                 if (nargs > 1){
                     self.target = try self.allocator.dupe(u8, argv[2]);
@@ -83,6 +98,7 @@ pub const Command = struct {
                 } else {
                     self.target = ".";
                 }
+
             } else if (std.mem.eql(u8, "d", self.root)) {
                 if (nargs > 1){
                     self.target = try self.allocator.dupe(u8, argv[2]);
@@ -107,7 +123,8 @@ pub const Command = struct {
                     self.all = true;
                 }
             } else if (std.mem.eql(u8, "sv", self.root)) {
-                std.debug.print("setting for s command", .{});
+                std.debug.print("saving to database", .{});
+
             } else if (std.mem.eql(u8, "set", self.root)) {
                 if (nargs > 1){
                     self.target = try self.allocator.dupe(u8, argv[2]);

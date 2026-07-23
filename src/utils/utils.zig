@@ -106,10 +106,12 @@ pub fn takeManifest(field:[]const u8) ![]const u8 {
 }
 
 fn setTarget(which:[]const u8) []const u8 {
-    if(std.mem.eql(u8, cmd.typetarget.?, which)){
+    if(std.mem.eql(u8, which, "d")){
         return "C:\\Users\\USUARIO\\Downloads";
-    } else if(std.mem.eql(u8, cmd.typetarget.?, "t")){
+    } else if(std.mem.eql(u8, which, "t")){
         return "C:\\Users\\USUARIO\\trabajo";
+    } else {
+        return "";
     }
 }
 
@@ -120,15 +122,16 @@ pub fn deleteFrom(cmd:Command) !void {
     defer dir.close();
     var it = dir.iterate();
 
+    const allocator = std.heap.page_allocator;
+    const originpath = try takeManifest("origin");
+    const types = [_][]const u8{ "P", "DC" };
+    const multi = [_][]const u8{ "V", "S"};
+
     while (try it.next()) |entry| {
         if(std.mem.eql(u8, cmd.target, "all")){
-            const oldpath = try std.fs.path.join(allocator, &.{ targetpath, entry.name });
-            defer allocator.free(oldpath);
-
             const newpath = try std.fs.path.join(allocator, &.{ originpath, entry.name });
             defer allocator.free(newpath);
 
-            try cwd.copyFile(oldpath, cwd, newpath,.{});
         } else {
             for (types) |tp| {
                 if (std.mem.eql(u8, tp, cmd.target)) {
@@ -171,6 +174,7 @@ pub fn deleteFrom(cmd:Command) !void {
                 }
             }
         }
+    }
 }
 
 pub fn Copyfrom(cmd:Command) !void {

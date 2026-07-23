@@ -17,5 +17,4 @@ pub fn main() !void {
 
     try cmd.set();
     try worker.Worker(cmd);
-
 }

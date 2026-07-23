@@ -1,6 +1,7 @@
-const std   = @import("std");
-const Command = @import("..\\command.zig").Command;
+const std       = @import("std");
+const Command   = @import("..\\command.zig").Command;
 const utils     = @import("..\\utils\\utils.zig");
+const fs        = @import("..\\utils\\fs.zig");
 const File      = @import("..\\fs\\confile.zig").File;
 const screen    = @import(".\\..\\utils\\screen.zig");
 const zz        = @import("zigzag");
@@ -9,6 +10,9 @@ pub fn Worker(cmd:Command) !void {
     var targetpath:[]const u8 = "";
     if (std.mem.eql(u8, cmd.root, "cpf")) {
         try utils.Copyfrom(cmd);
+    } else if (std.mem.eql(u8, cmd.root, "ws")) {
+        std.debug.print("looking for: {s}", .{cmd.target});
+        try fs.readPDF(cmd);
     } else if (std.mem.eql(u8, cmd.root, "l")) {
         if(std.mem.eql(u8, cmd.target, "download") or std.mem.eql(u8, cmd.target, "d")){
             targetpath = "C:\\Users\\USUARIO\\Downloads";
@@ -37,6 +41,7 @@ pub fn Worker(cmd:Command) !void {
                 std.debug.print("not recognized target\n", .{});
             }
         }
+
     } else if (std.mem.eql(u8, cmd.root, "see")){
         const allocator = std.heap.page_allocator;
         var program = try zz.Program(screen.Model).init(allocator);
@@ -59,26 +64,23 @@ pub fn Worker(cmd:Command) !void {
             while (try it.next()) |entry| {
                 if (entry.kind != .file) continue;
                 if (std.mem.endsWith(u8, entry.name, ".pdf")) {
-                    std.debug.print("entry: {s}\n", .{entry.name});
                     const name = try allocator.dupe(u8, entry.name);
                     try list.addItem(name);
                 } else {
                     std.debug.print("cmd is not all", .{});
                 }
             }
+
         } else {
             std.debug.print("cmd is not all", .{});
         }
+
         program.model.list = list;
-
-        //const msg = screen.Model.Msg {
-        //    .text = "message"
-        //};
-        //try program.send(msg);
         try program.run();
-
+        
     } else if (std.mem.eql(u8, cmd.root, "sv")){
-        std.debug.print("saving file in db", .{});
+        std.debug.print("saving in db", .{});
+
     } else if (std.mem.eql(u8, cmd.root, "set")){
         if (utils.doExists("manifest.json") == false){
             const file = try std.fs.cwd().createFile("manifest.json", .{});
@@ -86,8 +88,10 @@ pub fn Worker(cmd:Command) !void {
             try file.writeAll("{\n\"origin\": \"\"\n}");
         }
         try utils.setManifest(cmd.target);
+
     } else if (std.mem.eql(u8, cmd.root, "d")){
-        utils.deleteFrom();
+        try utils.deleteFrom(cmd);
+
     } else {
         std.debug.print("\nworking\n", .{});
     }
